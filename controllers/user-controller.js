@@ -55,4 +55,11 @@ const loginUser = async (req, res) => {
     }
 }
 
-module.exports={ createUser, loginUser}
+const usernameChecker = async (req, res) => {
+  const {username} = req.body;
+  const user = await userModel.findOne({username});
+  const available = user ? false : true;
+  res.status(200).json({available});
+}
+
+module.exports={ createUser, loginUser, usernameChecker}
