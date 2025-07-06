@@ -6,10 +6,16 @@ const createUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-    const unameRegex = /^(?!\d)(?=[A-Za-z0-9-]{6,}$)(?!.*--)(?!.*[^A-Za-z0-9-])(?=(?:.*[A-Za-z]))^(?!.*-.*-)(?!^-)(?!.*-$)[A-Za-z0-9-]+$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    const unameRegex =
+      /^(?!\d)(?=[A-Za-z0-9-]{6,}$)(?!.*--)(?!.*[^A-Za-z0-9-])(?=(?:.*[A-Za-z]))^(?!.*-.*-)(?!^-)(?!.*-$)[A-Za-z0-9-]+$/;
 
-    if(!unameRegex.test(username) || !passwordRegex.test(password) || email.trim() === ""){
+    if (
+      !unameRegex.test(username) ||
+      !passwordRegex.test(password) ||
+      email.trim() === ""
+    ) {
       return res.status(400).json("Invalid Credentials!");
     }
 
@@ -29,7 +35,15 @@ const createUser = async (req, res) => {
         });
 
         const token = tokenGenerator(user);
-        res.cookie("token", token);
+
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "Lax",
+          path: "/",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
         res.status(200).json(user);
       });
     });
@@ -42,11 +56,10 @@ const loginUser = async (req, res) => {
   try {
     const { id, password } = req.body;
 
-    let user = await userModel.findOne({ email : id });
+    let user = await userModel.findOne({ email: id });
     if (!user) {
-      user = await userModel.findOne({ username : id });
-      if(!user)
-      return res.status(400).json("Wrong Credentials");
+      user = await userModel.findOne({ username: id });
+      if (!user) return res.status(400).json("Wrong Credentials");
     }
     bcrypt.compare(password, `${user.password}`, (err, result) => {
       if (err) res.status(400).json("Something went wrong!");
@@ -54,12 +67,31 @@ const loginUser = async (req, res) => {
         return res.status(400).json("Wrong Credentials");
       }
       const token = tokenGenerator(user);
-      res.cookie("token", token);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      
       return res.status(200).json(user);
     });
   } catch (err) {
     return res.status(400).json("Something went wrong!");
   }
+};
+
+const logoutUser = async (req, res) => {
+  
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
+    path: "/",
+  });
+
+  res.status(200).json("Logged out Successfully!");
 };
 
 const usernameChecker = async (req, res) => {
@@ -70,12 +102,8 @@ const usernameChecker = async (req, res) => {
 };
 
 const checkAuth = async (req, res) => {
-  if(!req.user){
-    return res.status(400).json("User not logged in!");
-  }
-
-  const user = await userModel.findOne({email : req.user.email});
+  const user = await userModel.findOne({ email: req.user.email });
   return res.status(200).json(user);
-}
+};
 
-module.exports = { createUser, loginUser, usernameChecker, checkAuth };
+module.exports = { createUser, loginUser, logoutUser, usernameChecker, checkAuth };

@@ -4,19 +4,19 @@ const keys = require("../config/keys-config");
 const isLoggedIn = (req, res, next) => {
   const token = req.cookies.token;
 
-  if (!token) {
+  if (!token || token === "") {
     req.user = null;
-    next();
+    return res.status(401).json("User not logged in!");
   }
 
-  if (token === "") {
+  try{
+      const data = jwt.verify(token, keys.JWT_KEY);
+      req.user = data;
+      next();
+  }catch(err){
     req.user = null;
-    next();
+    return res.status(401).json("Invalid or Expired token!");
   }
-
-  const data = jwt.verify(token, keys.JWT_KEY);
-  req.user = data;
-  next();
 };
 
 module.exports = isLoggedIn;
