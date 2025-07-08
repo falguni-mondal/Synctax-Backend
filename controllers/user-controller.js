@@ -83,7 +83,7 @@ const loginUser = async (req, res) => {
 };
 
 const logoutUser = async (req, res) => {
-  
+
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -106,4 +106,13 @@ const checkAuth = async (req, res) => {
   return res.status(200).json(user);
 };
 
-module.exports = { createUser, loginUser, logoutUser, usernameChecker, checkAuth };
+const userDeleter = async (req, res) => {
+  try{
+    await userModel.deleteOne({email : req.user.email});
+    res.status(200).json("User Deleted!");
+  }catch(err){
+    throw new Error(err.message);
+  }
+}
+
+module.exports = { createUser, loginUser, logoutUser, usernameChecker, checkAuth, userDeleter };
