@@ -21,6 +21,10 @@ const userSchema = mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  verificationToken: {
+    type: String,
+    default: undefined
+  },
   projects: {
     type: Array,
     default: [],

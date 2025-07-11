@@ -149,7 +149,7 @@ const verifyUser = async (req, res) => {
     await transporter.sendMail({
       to: email,
       subject: "Email verification for CodeLab",
-      html: `<p>Please click on <a style="background-color:rgb(28, 55, 143); color: white; padding: 8px 20px; border: none; border-radius: 5px;" href="${url}">Verify</a> to verify your email on CodeLab.</p>`,
+      html: `<p>Please click on <a style="background-color:rgb(23, 78, 180); color: white; padding: 8px 20px; border: none; border-radius: 5px;" href="${url}">Verify</a> to verify your email on CodeLab.</p>`,
     });
 
     res.status(200).json("Verification link send!");
@@ -168,7 +168,7 @@ const userVerifier = async (req, res) => {
     if (!user) {
       return res.status(400).json("User not found!");
     }
-    if (user.verficationToken !== token) {
+    if (user.verificationToken !== token) {
       return res.status(400).json("Token Mismathed!");
     }
 
