@@ -1,6 +1,9 @@
 const userModel = require("../models/user-model");
 const bcrypt = require("bcrypt");
 const { tokenGenerator } = require("../utils/tokenGenerator");
+const nodemailer = require("nodemailer");
+const keys = require("../config/keys-config");
+const jwt = require("jsonwebtoken");
 
 const createUser = async (req, res) => {
   try {
@@ -74,7 +77,7 @@ const loginUser = async (req, res) => {
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-      
+
       return res.status(200).json(user);
     });
   } catch (err) {
@@ -83,7 +86,6 @@ const loginUser = async (req, res) => {
 };
 
 const logoutUser = async (req, res) => {
-
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -107,12 +109,86 @@ const checkAuth = async (req, res) => {
 };
 
 const userDeleter = async (req, res) => {
-  try{
-    await userModel.deleteOne({email : req.user.email});
+  try {
+    await userModel.deleteOne({ email: req.user.email });
     res.status(200).json("User Deleted!");
-  }catch(err){
+  } catch (err) {
     throw new Error(err.message);
   }
-}
+};
 
-module.exports = { createUser, loginUser, logoutUser, usernameChecker, checkAuth, userDeleter };
+const verifyUser = async (req, res) => {
+  try {
+    const email = req.user.email;
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json("User not found!");
+    }
+    if (user.isVerified) {
+      return res.status(200).json("User verified!");
+    }
+
+    const token = jwt.sign({ email }, `${keys.EMAIL_VERIFY_KEY}`, {
+      expiresIn: "1h",
+    });
+
+    user.verificationToken = token;
+    await user.save();
+
+    const url = `${process.env.FRONTEND_TEST_URL}/user/verify/${token}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.APP_MAIL,
+        pass: process.env.MAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      to: email,
+      subject: "Email verification for CodeLab",
+      html: `<p>Please click on <a style="background-color:rgb(28, 55, 143); color: white; padding: 8px 20px; border: none; border-radius: 5px;" href="${url}">Verify</a> to verify your email on CodeLab.</p>`,
+    });
+
+    res.status(200).json("Verification link send!");
+  } catch (err) {
+    res.status(400).json(`${err.message}`);
+  }
+};
+
+const userVerifier = async (req, res) => {
+  try {
+    const { token } = req.body;
+    const decoded = jwt.verify(token, `${keys.EMAIL_VERIFY_KEY}`);
+
+    const user = await userModel.findOne({ email: decoded.email });
+
+    if (!user) {
+      return res.status(400).json("User not found!");
+    }
+    if (user.verficationToken !== token) {
+      return res.status(400).json("Token Mismathed!");
+    }
+
+    user.isVerified = true;
+    user.verficationToken = undefined;
+    await user.save();
+
+    return res.status(200).json("Verification Successfull!");
+  } catch (err) {
+    return res.status(400).json("Invalid or Expired toke!");
+  }
+};
+
+module.exports = {
+  createUser,
+  loginUser,
+  logoutUser,
+  usernameChecker,
+  checkAuth,
+  userDeleter,
+  verifyUser,
+  userVerifier,
+};
