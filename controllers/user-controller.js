@@ -47,7 +47,7 @@ const createUser = async (req, res) => {
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        res.status(200).json(user);
+        res.status(200).json({email : user.email, username: user.username, isVerified: user.isVerified, image: user.image, background: user.background});
       });
     });
   } catch (err) {
@@ -78,7 +78,7 @@ const loginUser = async (req, res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      return res.status(200).json(user);
+      return res.status(200).json({email : user.email, username: user.username, isVerified: user.isVerified, image: user.image, background: user.background});
     });
   } catch (err) {
     return res.status(400).json("Something went wrong!");
@@ -105,7 +105,8 @@ const usernameChecker = async (req, res) => {
 
 const checkAuth = async (req, res) => {
   const user = await userModel.findOne({ email: req.user.email });
-  return res.status(200).json(user);
+  const { email, username, isVerified, image, background } = user;
+  return res.status(200).json({ email, username, isVerified, image, background });
 };
 
 const userDeleter = async (req, res) => {
@@ -173,12 +174,12 @@ const userVerifier = async (req, res) => {
     }
 
     user.isVerified = true;
-    user.verficationToken = undefined;
+    user.verificationToken = undefined;
     await user.save();
 
     return res.status(200).json("Verification Successfull!");
   } catch (err) {
-    return res.status(400).json("Invalid or Expired toke!");
+    return res.status(400).json("Invalid or Expired token!");
   }
 };
 
