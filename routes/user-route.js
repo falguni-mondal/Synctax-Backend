@@ -8,7 +8,7 @@ const {
     usernameChecker,
     checkAuth,
     userDeleter,
-    verifyUser,
+    verificationLinkSender,
     userVerifier,
  } = require("../controllers/user-controller");
 
@@ -19,7 +19,7 @@ router.get("/logout", logoutUser);
 router.post("/check/username", usernameChecker);
 router.get("/auth", isLoggedIn, checkAuth);
 router.get("/account/deactivate", isLoggedIn, userDeleter);
-router.get("/verify/send", isLoggedIn, verifyUser);
+router.get("/verify/send", isLoggedIn, verificationLinkSender);
 router.post("/verify/match", userVerifier);
 
 module.exports = router

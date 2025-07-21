@@ -19,17 +19,17 @@ const createUser = async (req, res) => {
       !passwordRegex.test(password) ||
       email.trim() === ""
     ) {
-      return res.status(400).json("Invalid Credentials!");
+      return res.status(402).json("Invalid Credentials!");
     }
 
     const check = await userModel.findOne({ email: email });
-    if (check) return res.status(400).json("Account already exist!");
+    if (check) return res.status(402).json("Account already exist!");
 
     bcrypt.genSalt(10, (err, salt) => {
-      if (err) return res.status(400).json("Something went wrong!");
+      if (err) return res.status(401).json("Something went wrong!");
 
       bcrypt.hash(password, salt, async (err, hash) => {
-        if (err) return res.status(400).json("Something went wrong!");
+        if (err) return res.status(401).json("Something went wrong!");
 
         const user = await userModel.create({
           username,
@@ -111,14 +111,14 @@ const checkAuth = async (req, res) => {
 
 const userDeleter = async (req, res) => {
   try {
-    await userModel.deleteOne({ email: req.user.email });
-    res.status(200).json("User Deleted!");
+    const user = await userModel.deleteOne({ email: req.user.email });
+    res.status(200).json({...user, status: "Deleted"});
   } catch (err) {
     throw new Error(err.message);
   }
 };
 
-const verifyUser = async (req, res) => {
+const verificationLinkSender = async (req, res) => {
   try {
     const email = req.user.email;
     const user = await userModel.findOne({ email });
@@ -153,7 +153,7 @@ const verifyUser = async (req, res) => {
       html: `<p>Please click on <a style="background-color:rgb(23, 78, 180); color: white; padding: 8px 20px; border: none; border-radius: 5px;" href="${url}">Verify</a> to verify your email on CodeLab.</p>`,
     });
 
-    res.status(200).json("Verification link send!");
+    res.status(200).json({status: "sent", token});
   } catch (err) {
     res.status(400).json(`${err.message}`);
   }
@@ -167,10 +167,10 @@ const userVerifier = async (req, res) => {
     const user = await userModel.findOne({ email: decoded.email });
 
     if (!user) {
-      return res.status(400).json("User not found!");
+      return res.status(401).json("User not found!");
     }
     if (user.verificationToken !== token) {
-      return res.status(400).json("Token Mismathed!");
+      return res.status(401).json("Token Mismathed!");
     }
 
     user.isVerified = true;
@@ -190,6 +190,6 @@ module.exports = {
   usernameChecker,
   checkAuth,
   userDeleter,
-  verifyUser,
+  verificationLinkSender,
   userVerifier,
 };
