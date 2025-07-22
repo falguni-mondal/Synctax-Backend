@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 
 const createUser = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { name, pronouns, username, email, password } = req.body;
 
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -17,7 +17,9 @@ const createUser = async (req, res) => {
     if (
       !unameRegex.test(username) ||
       !passwordRegex.test(password) ||
-      email.trim() === ""
+      email.split(" ").join("") === "" ||
+      name.split(" ").join("").length < 6 ||
+      pronouns === ""
     ) {
       return res.status(402).json("Invalid Credentials!");
     }
@@ -35,6 +37,8 @@ const createUser = async (req, res) => {
           username,
           email,
           password: hash,
+          name,
+          pronouns
         });
 
         const token = tokenGenerator(user);
@@ -47,7 +51,7 @@ const createUser = async (req, res) => {
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        res.status(200).json({id: user._id, email : user.email, username: user.username, isVerified: user.isVerified, image: user.image, background: user.background});
+        res.status(200).json({id: user._id, name: user.name, pronouns: user.pronouns, email : user.email, username: user.username, isVerified: user.isVerified, image: user.image, background: user.background});
       });
     });
   } catch (err) {
@@ -78,7 +82,7 @@ const loginUser = async (req, res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      return res.status(200).json({id: user._id, email : user.email, username: user.username, isVerified: user.isVerified, image: user.image, background: user.background});
+      res.status(200).json({id: user._id, name: user.name, pronouns: user.pronouns, email : user.email, username: user.username, isVerified: user.isVerified, image: user.image, background: user.background});
     });
   } catch (err) {
     return res.status(400).json("Something went wrong!");
@@ -105,8 +109,8 @@ const usernameChecker = async (req, res) => {
 
 const checkAuth = async (req, res) => {
   const user = await userModel.findOne({ email: req.user.email });
-  const { _id, email, username, isVerified, image, background } = user;
-  return res.status(200).json({ id: _id, email, username, isVerified, image, background });
+  const { _id, name, pronouns, email, username, isVerified, image, background } = user;
+  return res.status(200).json({ id: _id, name, pronouns, email, username, isVerified, image, background });
 };
 
 const userDeleter = async (req, res) => {
