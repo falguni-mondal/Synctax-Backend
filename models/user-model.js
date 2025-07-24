@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const colorGenerator = require("../utils/colorGenerator");
 
 const userSchema = mongoose.Schema({
   name : {
@@ -65,10 +64,6 @@ const userSchema = mongoose.Schema({
   image: {
     type: String,
     default : "",
-  },
-  background : {
-    type: String,
-    default: () => colorGenerator(),
   },
 }, {timeStamps : true});
 

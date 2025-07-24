@@ -38,7 +38,7 @@ const createUser = async (req, res) => {
           email,
           password: hash,
           name,
-          pronouns
+          pronouns,
         });
 
         const token = tokenGenerator(user);
