@@ -187,6 +187,33 @@ const userVerifier = async (req, res) => {
   }
 };
 
+const userProfile = async (req, res) => {
+  try{
+  const userId = req.body.id;
+  const tokenId = req.user.id;
+
+  if(userId !== tokenId){
+    logoutUser();
+    return res.status(401).json({msg: "Please Signin to an account!"});
+  }
+
+    const user = await userModel.findOne({_id: tokenId});
+    if(!user){
+      return res.status(401).json({user: false, verified: false});
+    }
+    if(!user.isVerified){
+      return res.status(401).json({user: true, verified: false});
+    }
+    const {_id, email, name, pronouns, username, image, bio, website, linkedin, github, projects, snippets, followings, followers} = user;
+
+    res.status(200).json({id: _id, email, name, pronouns, username, image, bio, website, linkedin, github, projects, snippets, followings, followers});
+  }catch(err){
+    return res.status(400).json({err, msg: "Something went wrong!"});
+  }
+
+
+}
+
 module.exports = {
   createUser,
   loginUser,
@@ -196,4 +223,5 @@ module.exports = {
   userDeleter,
   verificationLinkSender,
   userVerifier,
+  userProfile,
 };

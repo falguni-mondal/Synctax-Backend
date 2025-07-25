@@ -25,6 +25,22 @@ const userSchema = mongoose.Schema({
     minlength: 8,
     required: true,
   },
+  bio: {
+    type: String,
+    default: ""
+  },
+  linkedin: {
+    type: String,
+    default: ""
+  },
+  website: {
+    type: String,
+    default: ""
+  },
+  github: {
+    type: String,
+    default: ""
+  },
   isVerified : {
     type: Boolean,
     default: false,

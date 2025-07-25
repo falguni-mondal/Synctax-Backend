@@ -10,6 +10,7 @@ const {
     userDeleter,
     verificationLinkSender,
     userVerifier,
+    userProfile,
  } = require("../controllers/user-controller");
 
 
@@ -21,5 +22,6 @@ router.get("/auth", isLoggedIn, checkAuth);
 router.get("/account/deactivate", isLoggedIn, userDeleter);
 router.get("/verify/send", isLoggedIn, verificationLinkSender);
 router.post("/verify/match", userVerifier);
+router.post("/profile", isLoggedIn, userProfile);
 
 module.exports = router
