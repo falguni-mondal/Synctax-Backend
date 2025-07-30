@@ -4,7 +4,7 @@ const { tokenGenerator } = require("../utils/tokenGenerator");
 const nodemailer = require("nodemailer");
 const keys = require("../config/keys-config");
 const jwt = require("jsonwebtoken");
-const { Jimp } = require("jimp");
+const sharp = require("sharp");
 const imageUrlGenerator = require("../utils/imgUrlGenerator");
 
 const createUser = async (req, res) => {
@@ -240,61 +240,64 @@ const userProfileUpdate = async (req, res) => {
     const { name, pronouns, bio, email, website, linkedin, github } = req.body;
     const updatedData = { name, pronouns, bio, email, website, linkedin, github };
 
-    // if(req.file){
-    //   try{
-    //     const image = await Jimp.read(req.file.buffer);
-    //     image.resize(512, Jimp.AUTO).quality(60);
-
-    //     const compressedBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
-
-    //     updatedData.image = {
-    //     data: compressedBuffer,
-    //     contentType: Jimp.MIME_JPEG,
-    //     }
-    //   }catch(imgErr){
-    //     return res.status(500).json({ message: "Image processing failed", error: imgErr.message });
-    //   }
-    // }
-
     if (req.file) {
-      updatedData.image = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype,
+      try {
+        const compressedBuffer = await sharp(req.file.buffer)
+          .resize({ width: 512 })            // Resize width to 512px, maintain aspect ratio
+          .jpeg({ quality: 60 })             // Compress to 60% and convert to JPEG
+          .toBuffer();
+
+        updatedData.image = {
+          data: compressedBuffer,
+          contentType: "image/jpeg",
+        };
+      } catch (imgErr) {
+        return res.status(500).json({
+          message: "Image processing failed",
+          error: imgErr.message,
+        });
+      }
+    }
+
+      // if (req.file) {
+      //   updatedData.image = {
+      //     data: req.file.buffer,
+      //     contentType: req.file.mimetype,
+      //   };
+      // }
+
+      const updatedUser = await userModel.findByIdAndUpdate(
+        req.user.id,
+        updatedData,
+        { new: true }
+      );
+
+      let imageUrl = null;
+      if (updatedUser.image.data) {
+        imageUrl = imageUrlGenerator(updatedUser.image);
+      }
+
+      const updatedResponse = {
+        ...updatedUser.toObject(),
+        image: imageUrl
       };
+
+      res.status(200).json(updatedResponse);
+
+    } catch (err) {
+      res.status(500).json(err.message);
     }
-
-    const updatedUser = await userModel.findByIdAndUpdate(
-      req.user.id,
-      updatedData,
-      { new: true }
-    );
-
-    let imageUrl = null;
-    if (updatedUser.image.data) {
-      imageUrl = imageUrlGenerator(updatedUser.image);
-    }
-
-    const updatedResponse = {
-      ...updatedUser.toObject(),
-      image: imageUrl
-    };
-
-    res.status(200).json(updatedResponse);
-
-  } catch (err) {
-    res.status(500).json(err.message);
   }
-}
 
 module.exports = {
-  createUser,
-  loginUser,
-  logoutUser,
-  usernameChecker,
-  checkAuth,
-  userDeleter,
-  verificationLinkSender,
-  userVerifier,
-  userProfile,
-  userProfileUpdate,
-};
+    createUser,
+    loginUser,
+    logoutUser,
+    usernameChecker,
+    checkAuth,
+    userDeleter,
+    verificationLinkSender,
+    userVerifier,
+    userProfile,
+    userProfileUpdate,
+  };
