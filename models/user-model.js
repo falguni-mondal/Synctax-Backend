@@ -78,8 +78,8 @@ const userSchema = mongoose.Schema({
     default: [],
   },
   image: {
-    type: String,
-    default : "",
+    data: Buffer,
+    contentType: String,
   },
 }, {timeStamps : true});
 

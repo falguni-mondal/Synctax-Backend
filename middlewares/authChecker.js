@@ -10,9 +10,9 @@ const isLoggedIn = (req, res, next) => {
   }
 
   try{
-      const data = jwt.verify(token, keys.JWT_KEY);
-      req.user = data;
-      next();
+    const data = jwt.verify(token, keys.JWT_KEY);
+    req.user = data;
+    next();
   }catch(err){
     req.user = null;
     return res.status(401).json("Invalid or Expired token!");

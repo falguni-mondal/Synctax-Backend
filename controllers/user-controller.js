@@ -4,6 +4,8 @@ const { tokenGenerator } = require("../utils/tokenGenerator");
 const nodemailer = require("nodemailer");
 const keys = require("../config/keys-config");
 const jwt = require("jsonwebtoken");
+const { Jimp } = require("jimp");
+const imageUrlGenerator = require("../utils/imgUrlGenerator");
 
 const createUser = async (req, res) => {
   try {
@@ -51,7 +53,12 @@ const createUser = async (req, res) => {
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        res.status(200).json({id: user._id, name: user.name, pronouns: user.pronouns, email : user.email, username: user.username, isVerified: user.isVerified, image: user.image, background: user.background});
+        let imageUrl = null;
+        if (user.image.data) {
+          imageUrl = imageUrlGenerator(user.image);
+        }
+
+        res.status(200).json({ id: user._id, name: user.name, pronouns: user.pronouns, email: user.email, username: user.username, isVerified: user.isVerified, image: imageUrl, background: user.background });
       });
     });
   } catch (err) {
@@ -82,7 +89,12 @@ const loginUser = async (req, res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      res.status(200).json({id: user._id, name: user.name, pronouns: user.pronouns, email : user.email, username: user.username, isVerified: user.isVerified, image: user.image, background: user.background});
+      let imageUrl = null;
+      if (user.image.data) {
+        imageUrl = imageUrlGenerator(user.image);
+      }
+
+      res.status(200).json({ id: user._id, name: user.name, pronouns: user.pronouns, email: user.email, username: user.username, isVerified: user.isVerified, image: imageUrl, background: user.background });
     });
   } catch (err) {
     return res.status(400).json("Something went wrong!");
@@ -110,13 +122,17 @@ const usernameChecker = async (req, res) => {
 const checkAuth = async (req, res) => {
   const user = await userModel.findOne({ email: req.user.email });
   const { _id, name, pronouns, email, username, isVerified, image, background } = user;
-  return res.status(200).json({ id: _id, name, pronouns, email, username, isVerified, image, background });
+  let imageUrl = null;
+  if (image.data) {
+    imageUrl = imageUrlGenerator(image);
+  }
+  return res.status(200).json({ id: _id, name, pronouns, email, username, isVerified, image: imageUrl, background });
 };
 
 const userDeleter = async (req, res) => {
   try {
     const user = await userModel.deleteOne({ email: req.user.email });
-    res.status(200).json({...user, status: "Deleted"});
+    res.status(200).json({ ...user, status: "Deleted" });
   } catch (err) {
     throw new Error(err.message);
   }
@@ -157,7 +173,7 @@ const verificationLinkSender = async (req, res) => {
       html: `<p>Please click on <a style="background-color:rgb(23, 78, 180); color: white; padding: 8px 20px; border: none; border-radius: 5px;" href="${url}">Verify</a> to verify your email on CodeLab.</p>`,
     });
 
-    res.status(200).json({status: "sent", token});
+    res.status(200).json({ status: "sent", token });
   } catch (err) {
     res.status(400).json(`${err.message}`);
   }
@@ -188,30 +204,86 @@ const userVerifier = async (req, res) => {
 };
 
 const userProfile = async (req, res) => {
-  try{
-  const userId = req.body.id;
-  const tokenId = req.user.id;
+  try {
+    const userId = req.body.id;
+    const tokenId = req.user.id;
 
-  if(userId !== tokenId){
-    logoutUser();
-    return res.status(401).json({msg: "Please Signin to an account!"});
+    if (userId !== tokenId) {
+      logoutUser();
+      return res.status(401).json({ msg: "Please Signin to an account!" });
+    }
+
+    const user = await userModel.findOne({ _id: tokenId });
+    if (!user) {
+      return res.status(401).json({ user: false, verified: false });
+    }
+    if (!user.isVerified) {
+      return res.status(401).json({ user: true, verified: false });
+    }
+    const { _id, email, name, pronouns, username, image, bio, website, linkedin, github, projects, snippets, followings, followers } = user;
+
+    let imageUrl = null;
+    if (image.data) {
+      imageUrl = imageUrlGenerator(image);
+    }
+
+    res.status(200).json({ id: _id, email, name, pronouns, username, image: imageUrl, bio, website, linkedin, github, projects, snippets, followings, followers });
+  } catch (err) {
+    return res.status(400).json({ err, msg: "Something went wrong!" });
   }
 
-    const user = await userModel.findOne({_id: tokenId});
-    if(!user){
-      return res.status(401).json({user: false, verified: false});
-    }
-    if(!user.isVerified){
-      return res.status(401).json({user: true, verified: false});
-    }
-    const {_id, email, name, pronouns, username, image, bio, website, linkedin, github, projects, snippets, followings, followers} = user;
 
-    res.status(200).json({id: _id, email, name, pronouns, username, image, bio, website, linkedin, github, projects, snippets, followings, followers});
-  }catch(err){
-    return res.status(400).json({err, msg: "Something went wrong!"});
+}
+
+const userProfileUpdate = async (req, res) => {
+  try {
+    const { name, pronouns, bio, email, website, linkedin, github } = req.body;
+    const updatedData = { name, pronouns, bio, email, website, linkedin, github };
+
+    // if(req.file){
+    //   try{
+    //     const image = await Jimp.read(req.file.buffer);
+    //     image.resize(512, Jimp.AUTO).quality(60);
+
+    //     const compressedBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
+
+    //     updatedData.image = {
+    //     data: compressedBuffer,
+    //     contentType: Jimp.MIME_JPEG,
+    //     }
+    //   }catch(imgErr){
+    //     return res.status(500).json({ message: "Image processing failed", error: imgErr.message });
+    //   }
+    // }
+
+    if (req.file) {
+      updatedData.image = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype,
+      };
+    }
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      req.user.id,
+      updatedData,
+      { new: true }
+    );
+
+    let imageUrl = null;
+    if (updatedUser.image.data) {
+      imageUrl = imageUrlGenerator(updatedUser.image);
+    }
+
+    const updatedResponse = {
+      ...updatedUser.toObject(),
+      image: imageUrl
+    };
+
+    res.status(200).json(updatedResponse);
+
+  } catch (err) {
+    res.status(500).json(err.message);
   }
-
-
 }
 
 module.exports = {
@@ -224,4 +296,5 @@ module.exports = {
   verificationLinkSender,
   userVerifier,
   userProfile,
+  userProfileUpdate,
 };

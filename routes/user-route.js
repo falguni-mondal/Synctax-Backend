@@ -11,7 +11,9 @@ const {
     verificationLinkSender,
     userVerifier,
     userProfile,
+    userProfileUpdate,
  } = require("../controllers/user-controller");
+const upload = require("../config/multer-config");
 
 
 router.post("/create", createUser);
@@ -23,5 +25,6 @@ router.get("/account/deactivate", isLoggedIn, userDeleter);
 router.get("/verify/send", isLoggedIn, verificationLinkSender);
 router.post("/verify/match", userVerifier);
 router.post("/profile", isLoggedIn, userProfile);
+router.post("/profile/update", isLoggedIn, upload.single("image"), userProfileUpdate);
 
 module.exports = router
