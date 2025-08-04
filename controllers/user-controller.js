@@ -243,13 +243,14 @@ const userProfileUpdate = async (req, res) => {
     if (req.file) {
       try {
         const compressedBuffer = await sharp(req.file.buffer)
-          .resize({ width: 512 })            // Resize width to 512px, maintain aspect ratio
-          .jpeg({ quality: 60 })             // Compress to 60% and convert to JPEG
+          .resize({ width: 512 })
+          .toFormat("webp")
+          .webp({ quality: 60 })
           .toBuffer();
 
         updatedData.image = {
           data: compressedBuffer,
-          contentType: "image/jpeg",
+          contentType: "image/webp",
         };
       } catch (imgErr) {
         return res.status(500).json({
