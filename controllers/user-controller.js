@@ -213,7 +213,7 @@ const userProfile = async (req, res) => {
       return res.status(401).json({ msg: "Please Signin to an account!" });
     }
 
-    const user = await userModel.findOne({ _id: tokenId });
+    const user = await userModel.findOne({ _id: tokenId }).populate("snippets");
     if (!user) {
       return res.status(401).json({ user: false, verified: false });
     }

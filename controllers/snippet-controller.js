@@ -31,6 +31,22 @@ const createSnippet = async (req, res) => {
   }
 };
 
+const findSnippet = async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    const snippet = snippetModel.findOne({_id: id});
+
+    const {name, language, owner, collaborators, description, content, version, lastEditedBy} = snippet
+
+    return res.status(200).json({name, language, owner, collaborators, description, content, version, lastEditedBy});
+
+  } catch (err) {
+    return res.status(500).json(err.message);
+  }
+};
+
 module.exports = {
   createSnippet,
+  findSnippet,
 };
