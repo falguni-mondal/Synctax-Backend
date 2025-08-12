@@ -19,10 +19,12 @@ app.use(cors({
 
 // Routes
 const userRouter = require("./routes/user-route");
+const snippetRouter = require("./routes/snippet-route");
 
 
 //Route Initializing
 app.use("/api/user", userRouter);
+app.use("/api/snippet", snippetRouter);
 
 app.listen(3000, () => {
     console.log("Running!");

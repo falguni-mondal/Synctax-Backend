@@ -1,0 +1,10 @@
+const express = require("express");
+const router = express.Router();
+const isLoggedIn = require("../middlewares/authChecker");
+
+const { createSnippet } = require("../controllers/snippet-controller");
+
+
+router.post("/create", isLoggedIn, createSnippet);
+
+module.exports = router;

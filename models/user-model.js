@@ -57,10 +57,10 @@ const userSchema = mongoose.Schema({
     type: Array,
     default: [],
   },
-  snippets: {
-    type: Array,
-    default: [],
-  },
+  snippets: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "snippet",
+  }],
   posts : {
     type : Array,
     default : []
