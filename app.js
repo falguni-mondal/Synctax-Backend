@@ -12,8 +12,10 @@ app.use(express.urlencoded({extended : true}));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(parser());
 
+const frontendURL = process.env.FRONTEND_URL;
+
 app.use(cors({
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', `${frontendURL}`],
     credentials: true
 }));
 

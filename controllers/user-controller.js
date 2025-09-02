@@ -243,9 +243,9 @@ const userProfileUpdate = async (req, res) => {
     if (req.file) {
       try {
         const compressedBuffer = await sharp(req.file.buffer)
-          .resize({ width: 512 })
+          .resize({ width: 2180 })
           .toFormat("webp")
-          .webp({ quality: 60 })
+          .webp({ quality: 90 })
           .toBuffer();
 
         updatedData.image = {
