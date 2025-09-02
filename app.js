@@ -30,6 +30,6 @@ const snippetRouter = require("./routes/snippet-route");
 app.use("/api/user", userRouter);
 app.use("/api/snippet", snippetRouter);
 
-app.listen(3000, () => {
-    console.log("Running!");
-})
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server is running!");
+});
