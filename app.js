@@ -5,7 +5,9 @@ require("dotenv").config();
 const parser = require("cookie-parser");
 const cors = require('cors');
 
-const db = require("./config/mongoose-config");
+const connectDB = require("./config/mongoose-config");
+// DB CONNECTING
+connectDB();
 
 app.use(express.json());
 app.use(express.urlencoded({extended : true}));
