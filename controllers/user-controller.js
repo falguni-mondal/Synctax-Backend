@@ -157,7 +157,7 @@ const verificationLinkSender = async (req, res) => {
     user.verificationToken = token;
     await user.save();
 
-    const url = `${process.env.FRONTEND_TEST_URL}/user/verify/${token}`;
+    const url = `${process.env.FRONTEND_URL}/user/verify/${token}`;
 
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -259,13 +259,6 @@ const userProfileUpdate = async (req, res) => {
         });
       }
     }
-
-      // if (req.file) {
-      //   updatedData.image = {
-      //     data: req.file.buffer,
-      //     contentType: req.file.mimetype,
-      //   };
-      // }
 
       const updatedUser = await userModel.findByIdAndUpdate(
         req.user.id,
